@@ -77,8 +77,12 @@ WSGI_APPLICATION = 'lab1.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'lab1',
+	'USER': 'lab1_admin',
+	'PASSWORD': 'admin',
+	'HOST': 'localhost',
+	'POST': '',
     }
 }
 
