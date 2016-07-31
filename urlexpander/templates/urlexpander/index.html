@@ -1,0 +1,22 @@
+{% if error_message %}
+  <p><strong>{{ error_message }} </strong></p>
+{% endif %}
+
+<form action="{% url 'expand_url' %}" method="POST">
+	{% csrf_token %}
+	<input type="text" type="text" name="shortend_url">
+	<input type="submit" value="Submit">
+</form>
+
+{% if all_urls %}
+  <ul>
+    {% for this_url in all_urls %}
+      <li><a href="{%  url 'detail' this_url.pk %}">details for {{ this_url.shortend_url }}</a> <a href="{% url 'delete' this_url.pk %}">Delete!</a></li>
+    {% endfor %}
+  </ul>
+{% else %}
+  <h3>You have not expanded any URLs</h3>
+{% endif %}
+
+
+
