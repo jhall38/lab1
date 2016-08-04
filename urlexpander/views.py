@@ -1,5 +1,6 @@
 from django.shortcuts import render, get_object_or_404
 from urllib.request import urlopen
+import requests
 from bs4 import BeautifulSoup
 from .models import URL
 
@@ -13,14 +14,21 @@ def detail(request, url_pk):
 
 def expand_url(request):
 	shortend_url = request.POST['shortend_url']
-	html = urlopen(shortend_url)
-	soup = BeautifulSoup(html)
 	new_url = URL()
-	new_url.shortend_url = shortend_url
-	new_url.expanded_url = html.geturl()
-	new_url.status = html.getcode()
-	new_url.page_title = soup.html.head.title.contents[0]
-	new_url.save()
+	try:
+		html = requests.get(shortend_url)
+		print(html.status_code)
+		if html.status_code == 200:
+			soup = BeautifulSoup(html.content)
+			new_url.page_title = soup.html.head.title.contents[0]
+		else:
+			new_url.page_title = "Not availible"
+		new_url.shortend_url = shortend_url
+		new_url.expanded_url = html.url
+		new_url.status = html.status_code
+		new_url.save()
+	except requests.exceptions.RequestException as e: 
+		return render(request, 'urlexpander/error.html', {'e' : e})
 	return render(request, 'urlexpander/detail.html', {'this_url' : new_url})
 
 def delete(request, url_pk):

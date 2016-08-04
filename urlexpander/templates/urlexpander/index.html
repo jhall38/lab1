@@ -2,12 +2,15 @@
   <p><strong>{{ error_message }} </strong></p>
 {% endif %}
 
+<h1> URL Expander </h1>
 <form action="{% url 'expand_url' %}" method="POST">
 	{% csrf_token %}
-	<input type="text" type="text" name="shortend_url">
+	<label for="input">Enter a url: </label>
+	<input id="input" type="text" type="text" name="shortend_url">
 	<input type="submit" value="Submit">
 </form>
 
+<h2>Expanded URLs</h2>
 {% if all_urls %}
   <ul>
     {% for this_url in all_urls %}

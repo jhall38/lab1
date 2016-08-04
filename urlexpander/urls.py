@@ -6,4 +6,5 @@ urlpatterns = [
 	url(r'^(?P<url_pk>[0-9]+)/$', views.detail, name='detail'),
 	url(r'^expand/$', views.expand_url, name='expand_url'),
 	url(r'^(?P<url_pk>[0-9]+)/delete/$', views.delete, name='delete'),
+#	url(r'^error/', views.error, name="error"),
 ]
