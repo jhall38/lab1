@@ -2,16 +2,24 @@ from django.shortcuts import render, get_object_or_404
 from urllib.request import urlopen
 import requests
 from bs4 import BeautifulSoup
-from .models import URL
+from django.contrib.auth.decorators import login_required
+from .models import URL, Archived
 
+@login_required(login_url='/login/')
 def index(request):
 	all_urls = URL.objects.all()
 	return render(request, 'urlexpander/index.html', {'all_urls' : all_urls})
 
+@login_required(login_url='/login/')
 def detail(request, url_pk):
 	this_url = get_object_or_404(URL, pk=url_pk)
-	return render(request, 'urlexpander/detail.html', {'this_url' : this_url})
+	try:
+		this_archive = Archived.objects.get(url=this_url)
+		return render(request, 'urlexpander/detail.html', {'this_url' : this_url, 'this_archive' : this_archive})
+	except:
+		return render(request, 'urlexpander/detail.html', {'this_url' : this_url})
 
+@login_required(login_url='/login/')
 def expand_url(request):
 	shortend_url = request.POST['shortend_url']
 	new_url = URL()
@@ -27,9 +35,22 @@ def expand_url(request):
 		new_url.expanded_url = html.url
 		new_url.status = html.status_code
 		new_url.save()
+		request_url = "http://archive.org/wayback/available?url=" + new_url.expanded_url
+		r = requests.get(request_url).json()["archived_snapshots"]
+		if r:
+			new_archived = Archived()
+			new_archived.archived_url = r["closest"]["url"]
+			timestamp = r["closest"]["timestamp"]
+			to_store = timestamp[:4] + "-" + timestamp[4:6] + "-" + timestamp[6:8] + " " + timestamp[8:10] + ":" + timestamp[10:12] + ":" + timestamp[12:14]
+			new_archived.timestamp = to_store
+			new_archived.url = new_url
+			new_archived.save()
+			return render(request, 'urlexpander/detail.html', {'this_url' : new_url, 'this_archive' : new_archived})
+
+		else:
+			return render(request, 'urlexpander/detail.html', {'this_url' : new_url})		
 	except requests.exceptions.RequestException as e: 
 		return render(request, 'urlexpander/error.html', {'e' : e})
-	return render(request, 'urlexpander/detail.html', {'this_url' : new_url})
 
 def delete(request, url_pk):
 	this_url = get_object_or_404(URL, pk=url_pk)

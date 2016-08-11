@@ -10,3 +10,8 @@ class URL(models.Model):
 	
 	def get_absolute_url(self):
 		return reverse('urlexpander:detail)', kwargs={'pk': self.pk})
+
+class Archived(models.Model):
+	archived_url = models.CharField(max_length=500)
+	timestamp = models.DateTimeField()
+	url = models.ForeignKey('URL', on_delete=models.CASCADE,)
