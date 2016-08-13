@@ -5,7 +5,7 @@ from bs4 import BeautifulSoup
 from django.contrib.auth.decorators import login_required
 from .models import URL, Archived
 
-@login_required(login_url='/login/')
+@login_required(login_url='/lab1/login/')
 def index(request):
 	all_urls = URL.objects.all()
 	return render(request, 'urlexpander/index.html', {'all_urls' : all_urls})
