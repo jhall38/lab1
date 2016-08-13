@@ -18,11 +18,11 @@ from django.contrib import admin
 from django.contrib.auth import views
 
 urlpatterns = [
-     url('^', include('django.contrib.auth.urls')),
+#     url('^', '))
      url(r'^accounts/login/$', views.login, name='login'),
      url(r'login/$', views.login, name='login'),
 #    url(r'^accounts/auth/$', 'django_test.views.auth_view'),
-     url(r'^logout/$', views.logout, name='logout', kwargs={'next_page': 'urlexpander'}),
+     url(r'^logout/$', views.logout, name='logout', kwargs={'next_page': '/urlexpander'}),
 #    url(r'^accounts/loggedin/$', 'django_test.views.loggedin'),
 #    url(r'^accounts/invalid/$', 'django_test.views.invalid_ilogin'),
     url(r'^admin/', admin.site.urls),
