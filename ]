@@ -1,0 +1,10 @@
+<p>Shortend URL: {{this_url.shortend_url}}</p>
+<p>Expanded URL: {{this_url.expanded_url}}</p>
+<p>Status: {{this_url.status}}</p>
+<p>Page Title: {{this_url.page_title}}</p>
+{% if this_archive  %}
+<p>Last Archive URL: {{ this_archive.archived_url }} </p>
+<p>Archive Timestamp: {{ this_archive.timestamp }} </p>
+<p> {{ this_url.website_img.storage}} </p>
+{% endif %}
+<a href="{% url 'index' %}">Back</a>
