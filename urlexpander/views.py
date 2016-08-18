@@ -3,6 +3,11 @@ from urllib.request import urlopen
 import requests
 from bs4 import BeautifulSoup
 from django.contrib.auth.decorators import login_required
+from selenium import webdriver
+from django.core.files.base import ContentFile
+import uuid
+import os
+from django.core.files import File
 from .models import URL, Archived
 
 @login_required(login_url='/login/')
@@ -45,6 +50,16 @@ def expand_url(request):
 			new_archived.timestamp = to_store
 			new_archived.url = new_url
 			new_archived.save()
+			
+			driver = webdriver.PhantomJS()
+			driver.set_window_size(1024, 768)
+			driver.get(new_archived.archived_url)
+			temp = 'website_img_' + str(new_url.id) + '.png'
+			driver.save_screenshot('urlexpander/media/' + temp)
+			img = File(open('urlexpander/media/' + temp, 'rb'))
+			new_url.website_img.save(temp, img, save=True)
+			new_url.save()
+			os.remove('urlexpander/media/' + temp)
 			return render(request, 'urlexpander/detail.html', {'this_url' : new_url, 'this_archive' : new_archived})
 
 		else:
