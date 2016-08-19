@@ -8,6 +8,17 @@ from django.core.files.base import ContentFile
 import uuid
 import os
 from django.core.files import File
+from rest_framework import status
+from rest_framework.decorators import api_view
+from rest_framework.response import Response
+from ratelimit.decorators import ratelimit
+from urlexpander.serializers import URLDetailSerializer, URLCreateUpdateSerializer, ArchivedSerializer
+from rest_framework import generics
+from rest_framework.generics import (
+	CreateAPIView,
+	DestroyAPIView,
+	ListAPIView,
+)
 from .models import URL, Archived
 
 @login_required(login_url='/login/')
@@ -18,11 +29,7 @@ def index(request):
 @login_required(login_url='/login/')
 def detail(request, url_pk):
 	this_url = get_object_or_404(URL, pk=url_pk)
-	try:
-		this_archive = Archived.objects.get(url=this_url)
-		return render(request, 'urlexpander/detail.html', {'this_url' : this_url, 'this_archive' : this_archive})
-	except:
-		return render(request, 'urlexpander/detail.html', {'this_url' : this_url})
+	return render(request, 'urlexpander/detail.html', {'this_url' : this_url})
 
 @login_required(login_url='/login/')
 def expand_url(request):
@@ -48,9 +55,8 @@ def expand_url(request):
 			timestamp = r["closest"]["timestamp"]
 			to_store = timestamp[:4] + "-" + timestamp[4:6] + "-" + timestamp[6:8] + " " + timestamp[8:10] + ":" + timestamp[10:12] + ":" + timestamp[12:14]
 			new_archived.timestamp = to_store
-			new_archived.url = new_url
 			new_archived.save()
-			
+			new_url.archived = new_archived
 			driver = webdriver.PhantomJS()
 			driver.set_window_size(1024, 768)
 			driver.get(new_archived.archived_url)
@@ -67,10 +73,51 @@ def expand_url(request):
 	except requests.exceptions.RequestException as e: 
 		return render(request, 'urlexpander/error.html', {'e' : e})
 
+@login_required
 def delete(request, url_pk):
 	this_url = get_object_or_404(URL, pk=url_pk)
-	#client = boto3.client('s3')
-	#client.delete_object(Key=this_url.image)
 	this_url.website_img.delete()
 	this_url.delete()
 	return render(request, 'urlexpander/index.html', {'all_urls' : URL.objects.all()})
+
+@login_required(login_url='/login/')
+@ratelimit(key='ip', rate='10/m', block=True)
+@api_view(['GET', 'POST'])
+def url_list(request, format=None):
+	if request.method == 'GET':
+		urls = URL.objects.all()
+		serializer = URLDetailSerializer(urls, many=True)
+		return Response(serializer.data)
+	elif request.method == 'POST':
+		serializer = URLSerializer(data=request.data)
+		if serializer.is_valid():
+			serializer.save()
+			return Response(serializer.data, status=status.HTTP_201_CREATED)
+		return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+@login_required(login_url='/login/')
+@ratelimit(key='ip', rate='10/m', block=True)
+@api_view(['GET', 'DELETE'])
+def url_detail(request, pk, format=None):
+	try:
+		url = URL.objects.get(pk=pk)
+		if request.method == 'DELETE':
+			this_url = get_object_or_404(URL, pk=pk)
+			this_url.website_img.delete()
+			this_url.delete()
+			return Response(status=status.HTTP_204_NO_CONTENT)
+		if request.method == 'GET':
+			serializer = URLDetailSerializer(url)
+			return Response(serializer.data)
+	except URL.DoesNotExist:
+		return Response(status=status.HTTP_404_NOT_FOUND)
+
+class URLList(generics.ListCreateAPIView):
+	queryset = URL.objects.all()
+	serializer_class = URLDetailSerializer
+
+class URLCreateUpdateAPIView(CreateAPIView):
+	queryset = URL.objects.all()
+	serializer_class = URLCreateUpdateSerializer
+class URLDetail(generics.RetrieveUpdateDestroyAPIView):
+	serializer_class = URLDetailSerializer
+	queryset = URL.objects.all()
