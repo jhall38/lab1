@@ -2,9 +2,9 @@
 <p>Expanded URL: {{this_url.expanded_url}}</p>
 <p>Status: {{this_url.status}}</p>
 <p>Page Title: {{this_url.page_title}}</p>
-{% if this_archive  %}
-<p>Last Archive URL: {{ this_archive.archived_url }} </p>
-<p>Archive Timestamp: {{ this_archive.timestamp }} </p>
+{% if this_url.archived  %}
+<p>Last Archive URL: {{ this_url.archived.archived_url }} </p>
+<p>Archive Timestamp: {{ this_url.archived.timestamp }} </p>
 <p> <img src="{{ this_url.website_img.url}}" alt="website image"/> </p>
 {% endif %}
 <a href="{% url 'index' %}">Back</a>
